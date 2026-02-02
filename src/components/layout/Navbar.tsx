@@ -86,10 +86,15 @@ export function Navbar() {
 
           {/* Auth Buttons */}
           <div className="hidden lg:flex items-center gap-3">
-            <Link to="/login">
+            <Link to="/member/dashboard">
               <Button variant="ghost" size="sm">
                 <User className="w-4 h-4" />
-                Login
+                Dashboard
+              </Button>
+            </Link>
+            <Link to="/admin/dashboard">
+              <Button variant="outline" size="sm">
+                Admin
               </Button>
             </Link>
             <Link to="/register">
@@ -144,9 +149,15 @@ export function Navbar() {
               ))}
             </div>
             <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-border/50">
-              <Link to="/login" onClick={() => setIsOpen(false)}>
+              <Link to="/member/dashboard" onClick={() => setIsOpen(false)}>
                 <Button variant="outline" className="w-full">
-                  Login
+                  <User className="w-4 h-4 mr-2" />
+                  Dashboard
+                </Button>
+              </Link>
+              <Link to="/admin/dashboard" onClick={() => setIsOpen(false)}>
+                <Button variant="outline" className="w-full">
+                  Admin Panel
                 </Button>
               </Link>
               <Link to="/register" onClick={() => setIsOpen(false)}>

@@ -15,6 +15,8 @@ import NoticesPage from "./pages/NoticesPage";
 import GalleryPage from "./pages/GalleryPage";
 import WingsPage from "./pages/WingsPage";
 import WingDetailPage from "./pages/WingDetailPage";
+import MemberDashboard from "./pages/MemberDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +40,8 @@ const App = () => (
           <Route path="/gallery" element={<GalleryPage />} />
           <Route path="/wings" element={<WingsPage />} />
           <Route path="/wings/:wingId" element={<WingDetailPage />} />
+          <Route path="/member/dashboard" element={<MemberDashboard />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
