@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,21 +9,35 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Users, Calendar, FileText, Trophy, Settings, BarChart3,
-  Search, Filter, Check, X, Eye, Edit, Trash2, Plus,
-  TrendingUp, UserPlus, Bell, Download, Upload
+  Search, Check, X, Eye, Edit, Trash2, Plus,
+  TrendingUp, UserPlus, Bell, LogOut, GraduationCap
 } from "lucide-react";
 import { 
   members, events, notices, dashboardStats, 
-  wingNames, roleNames, statusColors, eventTypeColors 
+  wingNames, roleNames, statusColors, eventTypeColors,
+  Notice
 } from "@/data/mockData";
-import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { AddMemberForm } from "@/components/admin/AddMemberForm";
+import { CreateEventForm } from "@/components/admin/CreateEventForm";
+import { NoticeForm } from "@/components/admin/NoticeForm";
+import { AlumniForm } from "@/components/admin/AlumniForm";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const [memberFilter, setMemberFilter] = useState({ batch: "all", wing: "all", status: "all" });
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // Form states
+  const [showAddMemberForm, setShowAddMemberForm] = useState(false);
+  const [showCreateEventForm, setShowCreateEventForm] = useState(false);
+  const [showNoticeForm, setShowNoticeForm] = useState(false);
+  const [showAlumniForm, setShowAlumniForm] = useState(false);
+  const [editingNotice, setEditingNotice] = useState<Notice | null>(null);
 
   const filteredMembers = members.filter((member) => {
     const matchesBatch = memberFilter.batch === "all" || member.batch === memberFilter.batch;
@@ -51,6 +66,21 @@ export default function AdminDashboard() {
     });
   };
 
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
+
+  const handleEditNotice = (notice: Notice) => {
+    setEditingNotice(notice);
+    setShowNoticeForm(true);
+  };
+
+  const handleCreateNotice = () => {
+    setEditingNotice(null);
+    setShowNoticeForm(true);
+  };
+
   return (
     <Layout>
       <div className="min-h-screen bg-muted/30">
@@ -63,16 +93,19 @@ export default function AdminDashboard() {
                   Admin Dashboard
                 </h1>
                 <p className="text-secondary-foreground/70">
-                  Manage members, events, and club activities
+                  Welcome, {user?.name || "Admin"} • Manage members, events, and club activities
                 </p>
               </div>
               <div className="flex gap-3">
-                <Link to="/admin/settings">
-                  <Button variant="outline" size="sm" className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10">
-                    <Settings className="w-4 h-4" />
-                    Settings
-                  </Button>
-                </Link>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </Button>
               </div>
             </div>
           </div>
@@ -103,6 +136,10 @@ export default function AdminDashboard() {
                 <Bell className="w-4 h-4" />
                 Notices
               </TabsTrigger>
+              <TabsTrigger value="alumni" className="gap-2">
+                <GraduationCap className="w-4 h-4" />
+                Alumni
+              </TabsTrigger>
               <TabsTrigger value="certificates" className="gap-2">
                 <FileText className="w-4 h-4" />
                 Certificates
@@ -115,7 +152,7 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
                   { label: "Total Members", value: dashboardStats.totalMembers, icon: Users, color: "text-primary", trend: `+${dashboardStats.monthlyGrowth}%` },
-                  { label: "Pending Approvals", value: dashboardStats.pendingApprovals, icon: UserPlus, color: "text-yellow-500" },
+                  { label: "Pending Approvals", value: dashboardStats.pendingApprovals, icon: UserPlus, color: "text-accent" },
                   { label: "Active Events", value: dashboardStats.activeEvents, icon: Calendar, color: "text-cucc-cyber" },
                   { label: "Total Events", value: dashboardStats.totalEvents, icon: Trophy, color: "text-cucc-gold" },
                 ].map((stat) => (
@@ -126,7 +163,7 @@ export default function AdminDashboard() {
                           <p className="text-2xl font-bold">{stat.value}</p>
                           <p className="text-sm text-muted-foreground">{stat.label}</p>
                           {stat.trend && (
-                            <p className="text-xs text-green-500 flex items-center gap-1 mt-1">
+                            <p className="text-xs text-accent flex items-center gap-1 mt-1">
                               <TrendingUp className="w-3 h-3" />
                               {stat.trend} this month
                             </p>
@@ -144,7 +181,7 @@ export default function AdminDashboard() {
                 <Card className="border-border/50">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <UserPlus className="w-5 h-5 text-yellow-500" />
+                      <UserPlus className="w-5 h-5 text-accent" />
                       Pending Approvals
                     </CardTitle>
                     <CardDescription>Members waiting for approval</CardDescription>
@@ -167,10 +204,10 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-green-500 hover:text-green-600 hover:bg-green-500/10" onClick={() => handleApprove(member.id)}>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-accent hover:text-accent hover:bg-accent/10" onClick={() => handleApprove(member.id)}>
                               <Check className="w-4 h-4" />
                             </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-500/10" onClick={() => handleReject(member.id)}>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleReject(member.id)}>
                               <X className="w-4 h-4" />
                             </Button>
                           </div>
@@ -242,7 +279,7 @@ export default function AdminDashboard() {
                       <CardTitle>Member Management</CardTitle>
                       <CardDescription>View and manage all club members</CardDescription>
                     </div>
-                    <Button>
+                    <Button onClick={() => setShowAddMemberForm(true)}>
                       <Plus className="w-4 h-4 mr-2" />
                       Add Member
                     </Button>
@@ -346,10 +383,10 @@ export default function AdminDashboard() {
                                   </Button>
                                   {member.status === "pending" && (
                                     <>
-                                      <Button size="icon" variant="ghost" className="h-8 w-8 text-green-500" onClick={() => handleApprove(member.id)}>
+                                      <Button size="icon" variant="ghost" className="h-8 w-8 text-accent" onClick={() => handleApprove(member.id)}>
                                         <Check className="w-4 h-4" />
                                       </Button>
-                                      <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500" onClick={() => handleReject(member.id)}>
+                                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => handleReject(member.id)}>
                                         <X className="w-4 h-4" />
                                       </Button>
                                     </>
@@ -375,7 +412,7 @@ export default function AdminDashboard() {
                       <CardTitle>Event Management</CardTitle>
                       <CardDescription>Create and manage club events</CardDescription>
                     </div>
-                    <Button>
+                    <Button onClick={() => setShowCreateEventForm(true)}>
                       <Plus className="w-4 h-4 mr-2" />
                       Create Event
                     </Button>
@@ -384,39 +421,28 @@ export default function AdminDashboard() {
                 <CardContent>
                   <div className="space-y-4">
                     {events.map((event) => (
-                      <div key={event.id} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50 gap-4">
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                            <Calendar className="w-6 h-6 text-primary" />
+                      <div key={event.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <h3 className="font-medium">{event.title}</h3>
+                            <Badge variant="outline" className={`text-xs capitalize ${eventTypeColors[event.type]}`}>
+                              {event.type}
+                            </Badge>
                           </div>
-                          <div>
-                            <h4 className="font-medium">{event.title}</h4>
-                            <div className="flex flex-wrap items-center gap-2 mt-1">
-                              <Badge variant="outline" className={`capitalize ${eventTypeColors[event.type]}`}>
-                                {event.type}
-                              </Badge>
-                              <span className="text-sm text-muted-foreground">
-                                {new Date(event.date).toLocaleDateString()}
-                              </span>
-                              <span className="text-sm text-muted-foreground">•</span>
-                              <span className="text-sm text-muted-foreground">{event.venue}</span>
-                            </div>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {event.participants}/{event.maxParticipants} participants
-                            </p>
+                          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                            <span>{new Date(event.date).toLocaleDateString()}</span>
+                            <span>{event.venue}</span>
+                            <span>{event.participants}/{event.maxParticipants} participants</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 ml-16 md:ml-0">
+                        <div className="flex items-center gap-2">
                           <Badge variant={event.status === "completed" ? "secondary" : event.status === "upcoming" ? "default" : "outline"} className="capitalize">
                             {event.status}
                           </Badge>
-                          <Button size="icon" variant="ghost">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost">
+                          <Button size="icon" variant="ghost" className="h-8 w-8">
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="text-red-500">
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive">
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
@@ -434,9 +460,9 @@ export default function AdminDashboard() {
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                       <CardTitle>Notice Management</CardTitle>
-                      <CardDescription>Create and manage notices</CardDescription>
+                      <CardDescription>Create and manage notices for members</CardDescription>
                     </div>
-                    <Button>
+                    <Button onClick={handleCreateNotice}>
                       <Plus className="w-4 h-4 mr-2" />
                       Create Notice
                     </Button>
@@ -445,33 +471,55 @@ export default function AdminDashboard() {
                 <CardContent>
                   <div className="space-y-4">
                     {notices.map((notice) => (
-                      <div key={notice.id} className="p-4 rounded-lg bg-muted/50 border border-border/50">
-                        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Badge variant="outline" className="capitalize">{notice.category}</Badge>
-                              <span className="text-sm text-muted-foreground">
-                                {new Date(notice.publishDate).toLocaleDateString()}
-                              </span>
-                            </div>
-                            <h4 className="font-medium">{notice.title}</h4>
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{notice.content}</p>
-                            <p className="text-xs text-muted-foreground mt-2">By {notice.author}</p>
+                      <div key={notice.id} className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border/50">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <h3 className="font-medium">{notice.title}</h3>
+                            <Badge variant="outline" className="capitalize">{notice.category}</Badge>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Button size="icon" variant="ghost">
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button size="icon" variant="ghost">
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="text-red-500">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
+                            {notice.content}
+                          </p>
+                          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                            <span>By {notice.author}</span>
+                            <span>{new Date(notice.publishDate).toLocaleDateString()}</span>
                           </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleEditNotice(notice)}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
                     ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Alumni Tab */}
+            <TabsContent value="alumni" className="space-y-6">
+              <Card className="border-border/50">
+                <CardHeader>
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                      <CardTitle>Alumni Management</CardTitle>
+                      <CardDescription>Manage alumni network and registrations</CardDescription>
+                    </div>
+                    <Button onClick={() => setShowAlumniForm(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Alumni
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <GraduationCap className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>Alumni management features coming soon.</p>
+                    <p className="text-sm mt-2">Click "Add Alumni" to register new alumni members.</p>
                   </div>
                 </CardContent>
               </Card>
@@ -484,39 +532,19 @@ export default function AdminDashboard() {
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                       <CardTitle>Certificate Management</CardTitle>
-                      <CardDescription>Upload and manage certificates for members</CardDescription>
+                      <CardDescription>Generate and manage certificates</CardDescription>
                     </div>
                     <Button>
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload Certificates
+                      <Plus className="w-4 h-4 mr-2" />
+                      Generate Certificates
                     </Button>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {events.filter(e => e.status === "completed").map((event) => (
-                      <div key={event.id} className="p-4 rounded-lg bg-muted/50 border border-border/50">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <FileText className="w-5 h-5 text-primary" />
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-sm">{event.title}</h4>
-                            <p className="text-xs text-muted-foreground">{event.participants} participants</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="flex-1">
-                            <Upload className="w-4 h-4 mr-1" />
-                            Upload
-                          </Button>
-                          <Button size="sm" variant="outline" className="flex-1">
-                            <Download className="w-4 h-4 mr-1" />
-                            Export
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>Certificate management features coming soon.</p>
+                    <p className="text-sm mt-2">You'll be able to generate and manage certificates here.</p>
                   </div>
                 </CardContent>
               </Card>
@@ -524,6 +552,37 @@ export default function AdminDashboard() {
           </Tabs>
         </div>
       </div>
+
+      {/* Forms */}
+      <AddMemberForm 
+        open={showAddMemberForm} 
+        onOpenChange={setShowAddMemberForm}
+        onSuccess={() => {
+          toast({ title: "Member added successfully" });
+        }}
+      />
+      <CreateEventForm 
+        open={showCreateEventForm} 
+        onOpenChange={setShowCreateEventForm}
+        onSuccess={() => {
+          toast({ title: "Event created successfully" });
+        }}
+      />
+      <NoticeForm 
+        open={showNoticeForm} 
+        onOpenChange={setShowNoticeForm}
+        editNotice={editingNotice}
+        onSuccess={() => {
+          setEditingNotice(null);
+        }}
+      />
+      <AlumniForm 
+        open={showAlumniForm} 
+        onOpenChange={setShowAlumniForm}
+        onSuccess={() => {
+          toast({ title: "Alumni registered successfully" });
+        }}
+      />
     </Layout>
   );
 }

@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, ChevronDown, Code2, Shield, Lightbulb, User } from "lucide-react";
+import { Menu, X, ChevronDown, Code2, Shield, Lightbulb, User, LogOut, Settings } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -26,8 +27,16 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const isActive = (href: string) => location.pathname === href;
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+    setIsOpen(false);
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border/50">
@@ -86,22 +95,41 @@ export function Navbar() {
 
           {/* Auth Buttons */}
           <div className="hidden lg:flex items-center gap-3">
-            <Link to="/member/dashboard">
-              <Button variant="ghost" size="sm">
-                <User className="w-4 h-4" />
-                Dashboard
-              </Button>
-            </Link>
-            <Link to="/admin/dashboard">
-              <Button variant="outline" size="sm">
-                Admin
-              </Button>
-            </Link>
-            <Link to="/register">
-              <Button variant="hero" size="sm">
-                Join CUCC
-              </Button>
-            </Link>
+            {isAuthenticated ? (
+              <>
+                {user?.role === "admin" && (
+                  <Link to="/admin/dashboard">
+                    <Button variant="outline" size="sm">
+                      <Settings className="w-4 h-4" />
+                      Admin
+                    </Button>
+                  </Link>
+                )}
+                <Link to="/member/dashboard">
+                  <Button variant="ghost" size="sm">
+                    <User className="w-4 h-4" />
+                    Dashboard
+                  </Button>
+                </Link>
+                <Button variant="outline" size="sm" onClick={handleLogout}>
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="ghost" size="sm">
+                    Login
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button variant="hero" size="sm">
+                    Join CUCC
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -149,22 +177,41 @@ export function Navbar() {
               ))}
             </div>
             <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-border/50">
-              <Link to="/member/dashboard" onClick={() => setIsOpen(false)}>
-                <Button variant="outline" className="w-full">
-                  <User className="w-4 h-4 mr-2" />
-                  Dashboard
-                </Button>
-              </Link>
-              <Link to="/admin/dashboard" onClick={() => setIsOpen(false)}>
-                <Button variant="outline" className="w-full">
-                  Admin Panel
-                </Button>
-              </Link>
-              <Link to="/register" onClick={() => setIsOpen(false)}>
-                <Button variant="hero" className="w-full">
-                  Join CUCC
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  {user?.role === "admin" && (
+                    <Link to="/admin/dashboard" onClick={() => setIsOpen(false)}>
+                      <Button variant="outline" className="w-full">
+                        <Settings className="w-4 h-4 mr-2" />
+                        Admin Panel
+                      </Button>
+                    </Link>
+                  )}
+                  <Link to="/member/dashboard" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full">
+                      <User className="w-4 h-4 mr-2" />
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <Button variant="outline" className="w-full" onClick={handleLogout}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full">
+                      Login
+                    </Button>
+                  </Link>
+                  <Link to="/register" onClick={() => setIsOpen(false)}>
+                    <Button variant="hero" className="w-full">
+                      Join CUCC
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}

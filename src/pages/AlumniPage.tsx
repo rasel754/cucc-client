@@ -5,12 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, MapPin, Briefcase, Linkedin, Github, GraduationCap, Filter } from "lucide-react";
+import { Search, MapPin, Briefcase, Linkedin, Github, GraduationCap, Filter, Mail } from "lucide-react";
+import { AlumniForm } from "@/components/admin/AlumniForm";
 
 const alumni = [
   {
     id: 1,
     name: "Dr. Aminul Islam",
+    email: "aminul.islam@gmail.com",
     batch: "45",
     country: "USA",
     company: "Google",
@@ -22,6 +24,7 @@ const alumni = [
   {
     id: 2,
     name: "Rashida Begum",
+    email: "rashida.begum@outlook.com",
     batch: "46",
     country: "Canada",
     company: "Microsoft",
@@ -33,6 +36,7 @@ const alumni = [
   {
     id: 3,
     name: "Tariq Rahman",
+    email: "tariq.rahman@sap.com",
     batch: "47",
     country: "Germany",
     company: "SAP",
@@ -44,6 +48,7 @@ const alumni = [
   {
     id: 4,
     name: "Nasreen Akter",
+    email: "nasreen@brainstation23.com",
     batch: "48",
     country: "Bangladesh",
     company: "Brain Station 23",
@@ -55,6 +60,7 @@ const alumni = [
   {
     id: 5,
     name: "Jahangir Alam",
+    email: "jahangir.alam@meta.com",
     batch: "49",
     country: "UK",
     company: "Meta",
@@ -66,6 +72,7 @@ const alumni = [
   {
     id: 6,
     name: "Farzana Haque",
+    email: "farzana.haque@grab.com",
     batch: "50",
     country: "Singapore",
     company: "Grab",
@@ -77,6 +84,7 @@ const alumni = [
   {
     id: 7,
     name: "Mahbub Hossain",
+    email: "mahbub@pathao.com",
     batch: "50",
     country: "Bangladesh",
     company: "Pathao",
@@ -88,6 +96,7 @@ const alumni = [
   {
     id: 8,
     name: "Sultana Razia",
+    email: "sultana.razia@atlassian.com",
     batch: "51",
     country: "Australia",
     company: "Atlassian",
@@ -105,12 +114,14 @@ export default function AlumniPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCountry, setSelectedCountry] = useState("All Countries");
   const [selectedBatch, setSelectedBatch] = useState("All Batches");
+  const [showAlumniForm, setShowAlumniForm] = useState(false);
 
   const filteredAlumni = alumni.filter((alum) => {
     const matchesSearch = 
       alum.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       alum.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      alum.role.toLowerCase().includes(searchQuery.toLowerCase());
+      alum.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      alum.email.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCountry = selectedCountry === "All Countries" || alum.country === selectedCountry;
     const matchesBatch = selectedBatch === "All Batches" || alum.batch === selectedBatch;
     return matchesSearch && matchesCountry && matchesBatch;
@@ -129,9 +140,15 @@ export default function AlumniPage() {
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">
               Our Alumni Worldwide
             </h1>
-            <p className="text-xl text-secondary-foreground/80">
+            <p className="text-xl text-secondary-foreground/80 mb-6">
               Connect with CUCC alumni working at top companies around the globe
             </p>
+            <Button 
+              variant="hero" 
+              onClick={() => setShowAlumniForm(true)}
+            >
+              Join as Alumni
+            </Button>
           </div>
         </div>
       </section>
@@ -143,7 +160,7 @@ export default function AlumniPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name, company, or role..."
+                placeholder="Search by name, company, role, or email..."
                 className="pl-10"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -208,6 +225,10 @@ export default function AlumniPage() {
                         <MapPin className="w-4 h-4 text-primary" />
                         <span>{alum.country}</span>
                       </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Mail className="w-4 h-4 text-primary" />
+                        <span className="text-xs truncate">{alum.email}</span>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
@@ -216,6 +237,9 @@ export default function AlumniPage() {
                       </a>
                       <a href={alum.github} className="p-2 rounded-lg hover:bg-muted transition-colors flex-1 flex items-center justify-center">
                         <Github className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                      </a>
+                      <a href={`mailto:${alum.email}`} className="p-2 rounded-lg hover:bg-muted transition-colors flex-1 flex items-center justify-center">
+                        <Mail className="w-4 h-4 text-muted-foreground hover:text-primary" />
                       </a>
                     </div>
                   </CardContent>
@@ -240,6 +264,12 @@ export default function AlumniPage() {
           )}
         </div>
       </section>
+
+      {/* Alumni Form */}
+      <AlumniForm 
+        open={showAlumniForm} 
+        onOpenChange={setShowAlumniForm}
+      />
     </Layout>
   );
 }

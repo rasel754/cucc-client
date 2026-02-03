@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Code2, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -14,19 +15,61 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { toast } = useToast();
+  const { login, isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Redirect if already logged in
+  if (isAuthenticated && user) {
+    const redirectTo = user.role === "admin" ? "/admin/dashboard" : "/member/dashboard";
+    navigate(redirectTo, { replace: true });
+    return null;
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter both email and password.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     
-    // Simulate login
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast({
-      title: "Login feature coming soon!",
-      description: "Backend integration is required for authentication.",
-    });
-    setIsLoading(false);
+    try {
+      await login(email, password);
+      
+      // Get fresh user from storage after login
+      const storedUser = localStorage.getItem("user");
+      const userData = storedUser ? JSON.parse(storedUser) : null;
+      
+      toast({
+        title: "Login Successful!",
+        description: `Welcome back, ${userData?.name || "User"}!`,
+      });
+      
+      // Redirect based on role
+      const from = location.state?.from?.pathname;
+      if (from) {
+        navigate(from, { replace: true });
+      } else if (userData?.role === "admin") {
+        navigate("/admin/dashboard", { replace: true });
+      } else {
+        navigate("/member/dashboard", { replace: true });
+      }
+    } catch (error) {
+      toast({
+        title: "Login Failed",
+        description: error instanceof Error ? error.message : "Invalid credentials. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
