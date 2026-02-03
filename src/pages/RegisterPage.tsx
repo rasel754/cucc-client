@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,19 +9,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { Code2, ArrowRight, ArrowLeft, CheckCircle } from "lucide-react";
+import { Code2, ArrowRight, ArrowLeft, CheckCircle, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { apiService } from "@/lib/api";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 const batches = Array.from({ length: 10 }, (_, i) => `${50 + i}`);
 const sections = ["A", "B", "C", "D"];
 const religions = ["Islam", "Hinduism", "Christianity", "Buddhism", "Others"];
 
-const fieldsOfInterest = [
-  { id: "programming", label: "Programming" },
-  { id: "cybersecurity", label: "Cyber Security" },
-  { id: "research", label: "Research" },
-  { id: "others", label: "Others" },
+const clubWings = [
+  { id: "Programming", label: "Programming Club" },
+  { id: "Cyber Security", label: "Cyber Security Club" },
+  { id: "R&D", label: "R&D Club" },
 ];
 
 const technicalSkills = [
@@ -43,7 +43,9 @@ const extraCurricular = [
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [profilePreview, setProfilePreview] = useState<string>("");
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
     // Personal Information
@@ -59,18 +61,24 @@ export default function RegisterPage() {
     religion: "",
     
     // Contact Information
-    mobile: "",
+    phoneNumber: "",
     whatsapp: "",
     email: "",
     presentAddress: "",
     permanentAddress: "",
     emergencyContact: "",
     
+    // Club Information
+    clubWing: "" as "Programming" | "Cyber Security" | "R&D" | "",
+    profilePhoto: "",
+    
+    // Payment Information
+    paymentMethod: "" as "BKASH" | "NAGAD" | "",
+    transactionId: "",
+    
     // Interests & Skills
-    fieldsOfInterest: [] as string[],
     technicalSkills: [] as string[],
     extraCurricular: [] as string[],
-    otherInterest: "",
     otherSkill: "",
     otherExtra: "",
     
@@ -93,16 +101,83 @@ export default function RegisterPage() {
     }));
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setProfilePreview(result);
+        // In production, upload to Cloudinary and store URL
+        updateFormData("profilePhoto", result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async () => {
+    // Validation
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Password Mismatch",
+        description: "Passwords do not match.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.clubWing || !formData.paymentMethod || !formData.transactionId) {
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in club wing, payment method, and transaction ID.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsSubmitting(false);
-    toast({
-      title: "Registration Submitted!",
-      description: "Your membership application has been received. We'll review and get back to you soon.",
-    });
-    setStep(4);
+    
+    try {
+      await apiService.createMember({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        studentId: formData.studentId,
+        batch: formData.batch,
+        section: formData.section,
+        yearSemester: formData.yearSemester,
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
+        shift: formData.shift,
+        bloodGroup: formData.bloodGroup,
+        religion: formData.religion,
+        phoneNumber: formData.phoneNumber,
+        whatsapp: formData.whatsapp,
+        presentAddress: formData.presentAddress,
+        permanentAddress: formData.permanentAddress,
+        emergencyContact: formData.emergencyContact,
+        clubWing: formData.clubWing as "Programming" | "Cyber Security" | "R&D",
+        profilePhoto: formData.profilePhoto,
+        paymentMethod: formData.paymentMethod as "BKASH" | "NAGAD",
+        transactionId: formData.transactionId,
+        skills: formData.technicalSkills,
+        extraCurricular: formData.extraCurricular,
+      });
+      
+      toast({
+        title: "Registration Submitted!",
+        description: "Your membership application has been received. We'll review and get back to you soon.",
+      });
+      setStep(5);
+    } catch (error) {
+      toast({
+        title: "Registration Failed",
+        description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -125,7 +200,7 @@ export default function RegisterPage() {
 
             {/* Progress Steps */}
             <div className="flex items-center justify-center gap-4 mb-8">
-              {[1, 2, 3].map((s) => (
+              {[1, 2, 3, 4].map((s) => (
                 <div key={s} className="flex items-center gap-2">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
                     step >= s 
@@ -134,7 +209,7 @@ export default function RegisterPage() {
                   }`}>
                     {step > s ? <CheckCircle className="w-5 h-5" /> : s}
                   </div>
-                  {s < 3 && <div className={`w-12 h-1 rounded ${step > s ? 'bg-primary' : 'bg-muted'}`} />}
+                  {s < 4 && <div className={`w-12 h-1 rounded ${step > s ? 'bg-primary' : 'bg-muted'}`} />}
                 </div>
               ))}
             </div>
@@ -148,6 +223,42 @@ export default function RegisterPage() {
                     <CardDescription>Please provide your personal details as per university records</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
+                    {/* Profile Photo */}
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        {profilePreview ? (
+                          <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-primary">
+                            <img src={profilePreview} alt="Profile" className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setProfilePreview("");
+                                updateFormData("profilePhoto", "");
+                              }}
+                              className="absolute top-0 right-0 p-1 bg-destructive text-destructive-foreground rounded-full"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex flex-col items-center justify-center w-24 h-24 rounded-full bg-muted border-2 border-dashed border-border cursor-pointer hover:border-primary transition-colors">
+                            <Upload className="w-6 h-6 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground mt-1">Upload</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={handleImageChange}
+                            />
+                          </label>
+                        )}
+                      </div>
+                      <div>
+                        <Label className="text-base">Profile Photo *</Label>
+                        <p className="text-sm text-muted-foreground">Upload a clear passport-size photo</p>
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="name">Full Name *</Label>
                       <Input
@@ -302,12 +413,12 @@ export default function RegisterPage() {
                   <CardContent className="space-y-6">
                     <div className="grid md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="mobile">Mobile Number *</Label>
+                        <Label htmlFor="phoneNumber">Mobile Number *</Label>
                         <Input
-                          id="mobile"
+                          id="phoneNumber"
                           placeholder="+880 1XXX XXXXXX"
-                          value={formData.mobile}
-                          onChange={(e) => updateFormData("mobile", e.target.value)}
+                          value={formData.phoneNumber}
+                          onChange={(e) => updateFormData("phoneNumber", e.target.value)}
                         />
                       </div>
                       <div className="space-y-2">
@@ -379,35 +490,97 @@ export default function RegisterPage() {
               {step === 3 && (
                 <>
                   <CardHeader>
-                    <CardTitle className="font-display">Interests & Account</CardTitle>
-                    <CardDescription>Tell us about your interests and create your account</CardDescription>
+                    <CardTitle className="font-display">Club Wing & Payment</CardTitle>
+                    <CardDescription>Select your preferred wing and complete payment</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Field of Interest */}
+                    {/* Club Wing Selection */}
                     <div className="space-y-3">
-                      <Label>Field of Interest</Label>
-                      <div className="grid grid-cols-2 gap-3">
-                        {fieldsOfInterest.map((field) => (
-                          <div key={field.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={field.id}
-                              checked={formData.fieldsOfInterest.includes(field.id)}
-                              onCheckedChange={() => toggleArrayField("fieldsOfInterest", field.id)}
-                            />
-                            <Label htmlFor={field.id} className="font-normal">{field.label}</Label>
+                      <Label>Select Club Wing *</Label>
+                      <RadioGroup
+                        value={formData.clubWing}
+                        onValueChange={(value) => updateFormData("clubWing", value)}
+                        className="grid gap-3"
+                      >
+                        {clubWings.map((wing) => (
+                          <div
+                            key={wing.id}
+                            className={`flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-colors ${
+                              formData.clubWing === wing.id
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:border-primary/50"
+                            }`}
+                          >
+                            <RadioGroupItem value={wing.id} id={wing.id} />
+                            <Label htmlFor={wing.id} className="font-medium cursor-pointer flex-1">
+                              {wing.label}
+                            </Label>
                           </div>
                         ))}
-                      </div>
-                      {formData.fieldsOfInterest.includes("others") && (
-                        <Input
-                          placeholder="Please specify"
-                          value={formData.otherInterest}
-                          onChange={(e) => updateFormData("otherInterest", e.target.value)}
-                          className="mt-2"
-                        />
-                      )}
+                      </RadioGroup>
                     </div>
 
+                    {/* Payment Information */}
+                    <div className="border-t pt-6">
+                      <h3 className="font-semibold mb-4">Payment Information</h3>
+                      <div className="bg-muted/50 p-4 rounded-lg mb-4">
+                        <p className="text-sm text-muted-foreground">
+                          Membership Fee: <span className="font-bold text-foreground">৳500</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Send to: bKash - 01XXXXXXXXX or Nagad - 01XXXXXXXXX
+                        </p>
+                      </div>
+                      
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Payment Method *</Label>
+                          <Select 
+                            value={formData.paymentMethod} 
+                            onValueChange={(value) => updateFormData("paymentMethod", value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select payment method" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="BKASH">bKash</SelectItem>
+                              <SelectItem value="NAGAD">Nagad</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="transactionId">Transaction ID *</Label>
+                          <Input
+                            id="transactionId"
+                            placeholder="Enter TrxID from receipt"
+                            value={formData.transactionId}
+                            onChange={(e) => updateFormData("transactionId", e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between pt-4">
+                      <Button onClick={() => setStep(2)} variant="outline">
+                        <ArrowLeft className="w-4 h-4" />
+                        Back
+                      </Button>
+                      <Button onClick={() => setStep(4)} variant="hero">
+                        Continue
+                        <ArrowRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </>
+              )}
+
+              {step === 4 && (
+                <>
+                  <CardHeader>
+                    <CardTitle className="font-display">Skills & Account</CardTitle>
+                    <CardDescription>Tell us about your skills and create your account</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
                     {/* Technical Skills */}
                     <div className="space-y-3">
                       <Label>Technical Skills</Label>
@@ -498,7 +671,7 @@ export default function RegisterPage() {
                     </div>
 
                     <div className="flex justify-between pt-4">
-                      <Button onClick={() => setStep(2)} variant="outline">
+                      <Button onClick={() => setStep(3)} variant="outline">
                         <ArrowLeft className="w-4 h-4" />
                         Back
                       </Button>
@@ -515,7 +688,7 @@ export default function RegisterPage() {
                 </>
               )}
 
-              {step === 4 && (
+              {step === 5 && (
                 <CardContent className="py-16 text-center">
                   <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-6">
                     <CheckCircle className="w-10 h-10 text-accent" />
@@ -544,7 +717,7 @@ export default function RegisterPage() {
             </Card>
 
             {/* Already have account */}
-            {step < 4 && (
+            {step < 5 && (
               <p className="text-center mt-6 text-muted-foreground">
                 Already a member?{" "}
                 <Link to="/login" className="text-primary font-semibold hover:underline">

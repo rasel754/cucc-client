@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 import { currentUser, certificates, userAchievements, userEvents, wingNames, events } from "@/data/mockData";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const wingIcons = {
   programming: Code2,
@@ -26,9 +28,33 @@ const wingColors = {
 
 export default function MemberDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
-  const WingIcon = wingIcons[currentUser.wing];
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  
+  // Use auth user data if available, fallback to mock data
+  const displayUser = user ? {
+    name: user.name,
+    memberId: `CUCC-${user.id?.slice(0, 8) || "001"}`,
+    wing: user.clubWing?.toLowerCase().replace(" ", "") as "programming" | "cybersecurity" | "research" || "programming",
+    batch: user.batch,
+    joinDate: user.createdAt,
+    studentId: user.studentId,
+    department: "CSE",
+    email: user.email,
+    phone: user.phoneNumber,
+    bloodGroup: user.bloodGroup,
+    address: user.presentAddress,
+    skills: user.skills || [],
+  } : currentUser;
+  
+  const WingIcon = wingIcons[displayUser.wing] || Code2;
 
   const upcomingEvents = events.filter(e => e.status === "upcoming");
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
 
   return (
     <Layout>
@@ -46,27 +72,27 @@ export default function MemberDashboard() {
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
                   <h1 className="text-2xl md:text-3xl font-bold text-primary-foreground">
-                    {currentUser.name}
+                    {displayUser.name}
                   </h1>
-                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                  <Badge className="bg-accent/20 text-accent border-accent/30">
                     Active Member
                   </Badge>
                 </div>
                 <p className="text-secondary-foreground/70 mb-3">
-                  Member ID: {currentUser.memberId}
+                  Member ID: {displayUser.memberId}
                 </p>
                 <div className="flex flex-wrap items-center gap-4 text-sm text-secondary-foreground/60">
                   <span className="flex items-center gap-1">
-                    <WingIcon className={`w-4 h-4 ${wingColors[currentUser.wing]}`} />
-                    {wingNames[currentUser.wing]}
+                    <WingIcon className={`w-4 h-4 ${wingColors[displayUser.wing]}`} />
+                    {wingNames[displayUser.wing]}
                   </span>
                   <span className="flex items-center gap-1">
                     <GraduationCap className="w-4 h-4" />
-                    Batch {currentUser.batch}
+                    Batch {displayUser.batch}
                   </span>
                   <span className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
-                    Joined {new Date(currentUser.joinDate).toLocaleDateString()}
+                    Joined {new Date(displayUser.joinDate).toLocaleDateString()}
                   </span>
                 </div>
               </div>
@@ -79,12 +105,15 @@ export default function MemberDashboard() {
                     Settings
                   </Button>
                 </Link>
-                <Link to="/login">
-                  <Button variant="outline" size="sm" className="border-red-500/30 text-red-400 hover:bg-red-500/10">
-                    <LogOut className="w-4 h-4" />
-                    Logout
-                  </Button>
-                </Link>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-destructive/30 text-destructive hover:bg-destructive/10"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </Button>
               </div>
             </div>
           </div>

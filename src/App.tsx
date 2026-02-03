@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import AboutPage from "./pages/AboutPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -27,24 +29,40 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <ScrollToTop />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/executives" element={<ExecutivesPage />} />
-          <Route path="/alumni" element={<AlumniPage />} />
-          <Route path="/events" element={<EventsPage />} />
-          <Route path="/notices" element={<NoticesPage />} />
-          <Route path="/gallery" element={<GalleryPage />} />
-          <Route path="/wings" element={<WingsPage />} />
-          <Route path="/wings/:wingId" element={<WingDetailPage />} />
-          <Route path="/member/dashboard" element={<MemberDashboard />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <ScrollToTop />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/executives" element={<ExecutivesPage />} />
+            <Route path="/alumni" element={<AlumniPage />} />
+            <Route path="/events" element={<EventsPage />} />
+            <Route path="/notices" element={<NoticesPage />} />
+            <Route path="/gallery" element={<GalleryPage />} />
+            <Route path="/wings" element={<WingsPage />} />
+            <Route path="/wings/:wingId" element={<WingDetailPage />} />
+            <Route
+              path="/member/dashboard"
+              element={
+                <ProtectedRoute>
+                  <MemberDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
