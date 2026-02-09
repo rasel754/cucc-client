@@ -1,7 +1,7 @@
 // API Service Layer
 // Handles all communication with the backend
 
-const API_BASE_URL = "http://localhost:5000/api/v1";
+const API_BASE_URL = "https://cucc-server.vercel.app/api/v1";
 
 export interface LoginRequest {
   email: string;

@@ -141,7 +141,7 @@ export function ExecutiveBodyForm({ open, onOpenChange, onSuccess, initialData }
                         <div className="relative">
                             {profilePreview ? (
                                 <div className="relative w-20 h-20 rounded-full overflow-hidden">
-                                    <img src={profilePreview.startsWith("data:") || profilePreview.startsWith("http") ? profilePreview : `http://localhost:5000${profilePreview}`} alt="Profile" className="w-full h-full object-cover" />
+                                    <img src={profilePreview.startsWith("data:") || profilePreview.startsWith("http") ? profilePreview : `https://cucc-server.vercel.app${profilePreview}`} alt="Profile" className="w-full h-full object-cover" />
                                     {/* Fixed image preview logic to handle both data URLs (new uploads) and server paths */}
                                     <button
                                         type="button"

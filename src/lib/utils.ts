@@ -41,5 +41,5 @@ export function getImageUrl(path: string | undefined | null) {
   // Replace all backslashes with forward slashes for URL compatibility
   cleanPath = cleanPath.replace(/\\/g, '/');
 
-  return `http://localhost:5000/${cleanPath}`;
+  return `https://cucc-server.vercel.app/${cleanPath}`;
 }
