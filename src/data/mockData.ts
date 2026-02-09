@@ -19,6 +19,7 @@ export interface Member {
   skills: string[];
   bloodGroup: string;
   address: string;
+  isDeleted?: boolean;
 }
 
 export interface Event {
@@ -339,7 +340,7 @@ export const dashboardStats = {
 export const wingNames = {
   programming: "Programming Club",
   cybersecurity: "Cyber Security Club",
-  research: "R&D Club",
+  research: "Research & Development Club",
 };
 
 // Role names mapping

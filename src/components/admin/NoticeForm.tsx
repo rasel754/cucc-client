@@ -6,8 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { apiService } from "@/lib/api";
-import { Notice } from "@/data/mockData";
+import { apiService, Notice } from "@/lib/api";
 
 interface NoticeFormProps {
   open: boolean;
@@ -17,21 +16,22 @@ interface NoticeFormProps {
 }
 
 const categories = [
-  { value: "general", label: "General" },
-  { value: "event", label: "Event" },
-  { value: "result", label: "Result" },
-  { value: "important", label: "Important" },
+  { value: "Programming Contest", label: "Programming Contest" },
+  { value: "Hackathon", label: "Hackathon" },
+  { value: "Workshop", label: "Workshop" },
+  { value: "Seminar", label: "Seminar" },
+  { value: "Bootcamp", label: "Bootcamp" },
 ];
 
 export function NoticeForm({ open, onOpenChange, onSuccess, editNotice }: NoticeFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
     content: "",
     category: "",
-    attachment: "",
   });
 
   // Populate form when editing
@@ -41,15 +41,15 @@ export function NoticeForm({ open, onOpenChange, onSuccess, editNotice }: Notice
         title: editNotice.title,
         content: editNotice.content,
         category: editNotice.category,
-        attachment: editNotice.attachment || "",
       });
+      setSelectedFile(null); // Reset file on edit open
     } else {
       setFormData({
         title: "",
         content: "",
         category: "",
-        attachment: "",
       });
+      setSelectedFile(null);
     }
   }, [editNotice, open]);
 
@@ -57,34 +57,40 @@ export function NoticeForm({ open, onOpenChange, onSuccess, editNotice }: Notice
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       if (editNotice) {
-        await apiService.updateNotice(editNotice.id, formData);
+        await apiService.updateNotice(editNotice.id, formData, selectedFile);
         toast({
           title: "Notice Updated",
           description: "Notice has been updated successfully.",
         });
       } else {
-        await apiService.createNotice(formData);
+        await apiService.createNotice(formData, selectedFile);
         toast({
           title: "Notice Created",
           description: "New notice has been published successfully.",
         });
       }
-      
+
       onOpenChange(false);
       onSuccess?.();
-      
+
       setFormData({
         title: "",
         content: "",
         category: "",
-        attachment: "",
       });
+      setSelectedFile(null);
     } catch (error) {
       toast({
         title: "Error",
@@ -144,12 +150,17 @@ export function NoticeForm({ open, onOpenChange, onSuccess, editNotice }: Notice
           </div>
 
           <div className="space-y-2">
-            <Label>Attachment URL (optional)</Label>
+            <Label>Attachment (optional)</Label>
             <Input
-              value={formData.attachment}
-              onChange={(e) => updateField("attachment", e.target.value)}
-              placeholder="https://..."
+              type="file"
+              onChange={handleFileChange}
+              accept="image/*,.pdf"
             />
+            {editNotice?.attachment && !selectedFile && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Current attachment: <a href={editNotice.attachment} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">View</a>
+              </p>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

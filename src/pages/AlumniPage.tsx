@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
+import PageTitle from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,121 +8,67 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, MapPin, Briefcase, Linkedin, Github, GraduationCap, Filter, Mail } from "lucide-react";
 import { AlumniForm } from "@/components/admin/AlumniForm";
+import { apiService, Alumni } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
+import { getImageUrl } from "@/lib/utils";
 
-const alumni = [
-  {
-    id: 1,
-    name: "Dr. Aminul Islam",
-    email: "aminul.islam@gmail.com",
-    batch: "45",
-    country: "USA",
-    company: "Google",
-    role: "Senior Software Engineer",
-    image: "👨‍💻",
-    linkedin: "#",
-    github: "#",
-  },
-  {
-    id: 2,
-    name: "Rashida Begum",
-    email: "rashida.begum@outlook.com",
-    batch: "46",
-    country: "Canada",
-    company: "Microsoft",
-    role: "Product Manager",
-    image: "👩‍💼",
-    linkedin: "#",
-    github: "#",
-  },
-  {
-    id: 3,
-    name: "Tariq Rahman",
-    email: "tariq.rahman@sap.com",
-    batch: "47",
-    country: "Germany",
-    company: "SAP",
-    role: "Data Scientist",
-    image: "👨‍🔬",
-    linkedin: "#",
-    github: "#",
-  },
-  {
-    id: 4,
-    name: "Nasreen Akter",
-    email: "nasreen@brainstation23.com",
-    batch: "48",
-    country: "Bangladesh",
-    company: "Brain Station 23",
-    role: "Tech Lead",
-    image: "👩‍💻",
-    linkedin: "#",
-    github: "#",
-  },
-  {
-    id: 5,
-    name: "Jahangir Alam",
-    email: "jahangir.alam@meta.com",
-    batch: "49",
-    country: "UK",
-    company: "Meta",
-    role: "ML Engineer",
-    image: "🧑‍💻",
-    linkedin: "#",
-    github: "#",
-  },
-  {
-    id: 6,
-    name: "Farzana Haque",
-    email: "farzana.haque@grab.com",
-    batch: "50",
-    country: "Singapore",
-    company: "Grab",
-    role: "Backend Developer",
-    image: "👩‍🔧",
-    linkedin: "#",
-    github: "#",
-  },
-  {
-    id: 7,
-    name: "Mahbub Hossain",
-    email: "mahbub@pathao.com",
-    batch: "50",
-    country: "Bangladesh",
-    company: "Pathao",
-    role: "CTO",
-    image: "👨‍💼",
-    linkedin: "#",
-    github: "#",
-  },
-  {
-    id: 8,
-    name: "Sultana Razia",
-    email: "sultana.razia@atlassian.com",
-    batch: "51",
-    country: "Australia",
-    company: "Atlassian",
-    role: "DevOps Engineer",
-    image: "👩‍🔬",
-    linkedin: "#",
-    github: "#",
-  },
+const countries = [
+  "All Countries",
+  // Asia
+  "Bangladesh", "India", "Pakistan", "China", "Japan", "South Korea", "Singapore",
+  "Malaysia", "Indonesia", "Thailand", "Vietnam", "Philippines", "Nepal",
+  "UAE", "Saudi Arabia", "Qatar", "Kuwait", "Bahrain", "Oman", "Turkey",
+  // Europe
+  "UK", "Germany", "France", "Italy", "Spain", "Netherlands", "Belgium", "Switzerland",
+  "Sweden", "Norway", "Denmark", "Finland", "Austria", "Poland", "Ireland", "Portugal",
+  "Greece", "Czech Republic", "Hungary", "Romania",
+  // Americas
+  "USA", "Canada", "Brazil", "Mexico", "Argentina", "Chile", "Colombia",
+  // Oceania
+  "Australia", "New Zealand", "Russia",
+  // Other
+  "Other"
 ];
-
-const countries = ["All Countries", "Bangladesh", "USA", "Canada", "UK", "Germany", "Singapore", "Australia"];
-const batches = ["All Batches", ...Array.from({ length: 15 }, (_, i) => `${45 + i}`)];
+const batches = ["All Batches", ...Array.from({ length: 59 }, (_, i) => `${1 + i}`)];
 
 export default function AlumniPage() {
+  const [alumni, setAlumni] = useState<Alumni[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCountry, setSelectedCountry] = useState("All Countries");
   const [selectedBatch, setSelectedBatch] = useState("All Batches");
   const [showAlumniForm, setShowAlumniForm] = useState(false);
+  const { toast } = useToast();
+
+  const fetchAlumni = async () => {
+    try {
+      setIsLoading(true);
+      const response = await apiService.getAlumni();
+      if (response.success && response.data) {
+        setAlumni(response.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch alumni:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load alumni data.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAlumni();
+  }, []);
 
   const filteredAlumni = alumni.filter((alum) => {
-    const matchesSearch = 
-      alum.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      alum.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      alum.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      alum.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch =
+      (alum.name?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+      (alum.company?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+      (alum.jobRole?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+      (alum.email?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
     const matchesCountry = selectedCountry === "All Countries" || alum.country === selectedCountry;
     const matchesBatch = selectedBatch === "All Batches" || alum.batch === selectedBatch;
     return matchesSearch && matchesCountry && matchesBatch;
@@ -129,6 +76,7 @@ export default function AlumniPage() {
 
   return (
     <Layout>
+      <PageTitle title="Alumni" />
       {/* Hero */}
       <section className="bg-gradient-to-br from-secondary via-secondary/95 to-primary/80 text-secondary-foreground py-20">
         <div className="container mx-auto px-4">
@@ -143,8 +91,8 @@ export default function AlumniPage() {
             <p className="text-xl text-secondary-foreground/80 mb-6">
               Connect with CUCC alumni working at top companies around the globe
             </p>
-            <Button 
-              variant="hero" 
+            <Button
+              variant="hero"
               onClick={() => setShowAlumniForm(true)}
             >
               Join as Alumni
@@ -199,23 +147,39 @@ export default function AlumniPage() {
       {/* Alumni Grid */}
       <section className="section-padding bg-muted/30">
         <div className="container mx-auto">
-          {filteredAlumni.length > 0 ? (
+          {isLoading ? (
+            <div className="text-center py-16">Loading alumni...</div>
+          ) : filteredAlumni.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredAlumni.map((alum) => (
-                <Card key={alum.id} className="overflow-hidden card-hover border-border/50">
-                  <div className="h-32 bg-gradient-to-br from-primary/10 to-muted flex items-center justify-center relative">
-                    <span className="text-6xl">{alum.image}</span>
-                    <Badge className="absolute top-3 right-3 bg-secondary text-secondary-foreground">
+                <Card key={alum.id || alum._id} className="overflow-hidden card-hover border-border/50">
+                  {/* Fixed Cover Image Profile */}
+                  <div className="h-64 bg-muted relative border-b border-border/10 overflow-hidden group-hover:scale-[1.02] transition-transform duration-300">
+                    {alum.profilePhoto ? (
+                      <div className="w-full h-full">
+                        <img
+                          src={getImageUrl(alum.profilePhoto)}
+                          alt={alum.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      </div>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-muted">
+                        <span className="text-6xl">👨‍🎓</span>
+                      </div>
+                    )}
+                    <Badge className="absolute top-3 right-3 bg-secondary text-secondary-foreground z-10">
                       Batch {alum.batch}
                     </Badge>
                   </div>
                   <CardContent className="p-5">
                     <h3 className="font-display text-lg font-bold text-foreground">{alum.name}</h3>
-                    
+
                     <div className="mt-3 space-y-2 text-sm">
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Briefcase className="w-4 h-4 text-primary" />
-                        <span>{alum.role}</span>
+                        <span>{alum.jobRole}</span>
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <span className="text-xs">🏢</span>
@@ -232,12 +196,16 @@ export default function AlumniPage() {
                     </div>
 
                     <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
-                      <a href={alum.linkedin} className="p-2 rounded-lg hover:bg-muted transition-colors flex-1 flex items-center justify-center">
-                        <Linkedin className="w-4 h-4 text-muted-foreground hover:text-primary" />
-                      </a>
-                      <a href={alum.github} className="p-2 rounded-lg hover:bg-muted transition-colors flex-1 flex items-center justify-center">
-                        <Github className="w-4 h-4 text-muted-foreground hover:text-primary" />
-                      </a>
+                      {alum.linkedIn && (
+                        <a href={alum.linkedIn} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg hover:bg-muted transition-colors flex-1 flex items-center justify-center">
+                          <Linkedin className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                        </a>
+                      )}
+                      {alum.github && (
+                        <a href={alum.github} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg hover:bg-muted transition-colors flex-1 flex items-center justify-center">
+                          <Github className="w-4 h-4 text-muted-foreground hover:text-primary" />
+                        </a>
+                      )}
                       <a href={`mailto:${alum.email}`} className="p-2 rounded-lg hover:bg-muted transition-colors flex-1 flex items-center justify-center">
                         <Mail className="w-4 h-4 text-muted-foreground hover:text-primary" />
                       </a>
@@ -249,8 +217,8 @@ export default function AlumniPage() {
           ) : (
             <div className="text-center py-16">
               <p className="text-muted-foreground text-lg">No alumni found matching your filters.</p>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="mt-4"
                 onClick={() => {
                   setSearchQuery("");
@@ -266,9 +234,14 @@ export default function AlumniPage() {
       </section>
 
       {/* Alumni Form */}
-      <AlumniForm 
-        open={showAlumniForm} 
+      <AlumniForm
+        open={showAlumniForm}
         onOpenChange={setShowAlumniForm}
+        onSuccess={() => {
+          toast({ title: "Registration Submitted", description: "Your request has been submitted for approval." });
+          // Optionally refresh list if we want to show pending items immediately? 
+          // Usually public list only shows approved. So no need to refresh list here.
+        }}
       />
     </Layout>
   );

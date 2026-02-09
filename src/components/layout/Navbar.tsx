@@ -13,7 +13,7 @@ const navLinks = [
     children: [
       { label: "Programming Club", href: "/wings/programming", icon: Code2 },
       { label: "Cyber Security Club", href: "/wings/cybersecurity", icon: Shield },
-      { label: "R&D Club", href: "/wings/research", icon: Lightbulb },
+      { label: "Research & Development Club", href: "/wings/research", icon: Lightbulb },
     ],
   },
   { label: "Events", href: "/events" },
@@ -44,9 +44,7 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-primary to-cucc-navy rounded-xl flex items-center justify-center shadow-lg">
-              <Code2 className="w-5 h-5 md:w-6 md:h-6 text-primary-foreground" />
-            </div>
+            <img src="/club-logo.jpeg" alt="CUCC Logo" className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover shadow-lg" />
             <div className="hidden sm:block">
               <h1 className="font-display font-bold text-lg md:text-xl text-foreground">CUCC</h1>
               <p className="text-xs text-muted-foreground -mt-0.5">City University Computer Club</p>
@@ -64,16 +62,15 @@ export function Navbar() {
               >
                 <Link
                   to={link.href}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
-                    isActive(link.href)
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${isActive(link.href)
                       ? "text-primary bg-primary/10"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
+                    }`}
                 >
                   {link.label}
                   {link.children && <ChevronDown className="w-3 h-3" />}
                 </Link>
-                
+
                 {/* Dropdown */}
                 {link.children && activeDropdown === link.label && (
                   <div className="absolute top-full left-0 mt-1 w-56 bg-card rounded-xl shadow-xl border border-border/50 overflow-hidden animate-scale-in">
@@ -150,11 +147,10 @@ export function Navbar() {
                   <Link
                     to={link.href}
                     onClick={() => !link.children && setIsOpen(false)}
-                    className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                      isActive(link.href)
+                    className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${isActive(link.href)
                         ? "text-primary bg-primary/10"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    }`}
+                      }`}
                   >
                     {link.label}
                   </Link>

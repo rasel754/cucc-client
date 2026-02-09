@@ -12,7 +12,7 @@ const footerLinks = {
   resources: [
     { label: "Programming Club", href: "/wings/programming" },
     { label: "Cyber Security", href: "/wings/cybersecurity" },
-    { label: "R&D Club", href: "/wings/research" },
+    { label: "Research & Development Club", href: "/wings/research" },
     { label: "Alumni", href: "/alumni" },
     { label: "Executive Body", href: "/executives" },
   ],
@@ -39,16 +39,14 @@ export function Footer() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-cucc-sky rounded-xl flex items-center justify-center">
-                <Code2 className="w-6 h-6 text-primary-foreground" />
-              </div>
+              <img src="/club-logo.jpeg" alt="CUCC Logo" className="w-12 h-12 rounded-full object-cover" />
               <div>
                 <h3 className="font-display font-bold text-xl">CUCC</h3>
                 <p className="text-sm text-secondary-foreground/70">City University Computer Club</p>
               </div>
             </Link>
             <p className="text-secondary-foreground/80 mb-6 max-w-md">
-              Empowering students through technology, innovation, and collaboration. 
+              Empowering students through technology, innovation, and collaboration.
               Join us in building the future of computing at City University.
             </p>
             <div className="flex gap-3">

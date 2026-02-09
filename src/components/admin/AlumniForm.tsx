@@ -14,15 +14,28 @@ interface AlumniFormProps {
 }
 
 const countries = [
-  "Bangladesh", "USA", "Canada", "UK", "Germany", 
-  "Australia", "Singapore", "Japan", "UAE", "Other"
+  // Asia
+  "Bangladesh", "India", "Pakistan", "China", "Japan", "South Korea", "Singapore",
+  "Malaysia", "Indonesia", "Thailand", "Vietnam", "Philippines", "Sri Lanka", "Nepal",
+  "UAE", "Saudi Arabia", "Qatar", "Kuwait", "Bahrain", "Oman", "Turkey", "Israel",
+  // Europe
+  "UK", "Germany", "France", "Italy", "Spain", "Netherlands", "Belgium", "Switzerland",
+  "Sweden", "Norway", "Denmark", "Finland", "Austria", "Poland", "Ireland", "Portugal",
+  "Greece", "Czech Republic", "Hungary", "Romania",
+  // Americas
+  "USA", "Canada", "Brazil", "Mexico", "Argentina", "Chile", "Colombia",
+  // Oceania
+  "Australia", "New Zealand",
+  // Other
+  "Other"
 ];
 
-const batches = Array.from({ length: 15 }, (_, i) => `${45 + i}`);
+const batches = Array.from({ length: 59 }, (_, i) => `${1 + i}`);
 
 export function AlumniForm({ open, onOpenChange, onSuccess }: AlumniFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -30,8 +43,8 @@ export function AlumniForm({ open, onOpenChange, onSuccess }: AlumniFormProps) {
     batch: "",
     country: "",
     company: "",
-    role: "",
-    linkedin: "",
+    jobRole: "",
+    linkedIn: "",
     github: "",
   });
 
@@ -42,28 +55,29 @@ export function AlumniForm({ open, onOpenChange, onSuccess }: AlumniFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
-      await apiService.createAlumni(formData);
-      
+      await apiService.createAlumni(formData, file);
+
       toast({
         title: "Alumni Registered",
         description: "You have been added to our alumni network.",
       });
-      
+
       onOpenChange(false);
       onSuccess?.();
-      
+
       setFormData({
         name: "",
         email: "",
         batch: "",
         country: "",
         company: "",
-        role: "",
-        linkedin: "",
+        jobRole: "",
+        linkedIn: "",
         github: "",
       });
+      setFile(null);
     } catch (error) {
       toast({
         title: "Error",
@@ -150,8 +164,8 @@ export function AlumniForm({ open, onOpenChange, onSuccess }: AlumniFormProps) {
             <div className="space-y-2">
               <Label>Role/Designation *</Label>
               <Input
-                value={formData.role}
-                onChange={(e) => updateField("role", e.target.value)}
+                value={formData.jobRole}
+                onChange={(e) => updateField("jobRole", e.target.value)}
                 placeholder="e.g., Senior Software Engineer"
                 required
               />
@@ -160,21 +174,37 @@ export function AlumniForm({ open, onOpenChange, onSuccess }: AlumniFormProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>LinkedIn URL</Label>
+              <Label>LinkedIn URL *</Label>
               <Input
-                value={formData.linkedin}
-                onChange={(e) => updateField("linkedin", e.target.value)}
+                value={formData.linkedIn}
+                onChange={(e) => updateField("linkedIn", e.target.value)}
                 placeholder="https://linkedin.com/in/..."
+                required
               />
             </div>
             <div className="space-y-2">
-              <Label>GitHub URL</Label>
+              <Label>GitHub URL *</Label>
               <Input
                 value={formData.github}
                 onChange={(e) => updateField("github", e.target.value)}
                 placeholder="https://github.com/..."
+                required
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="photo">Profile Photo</Label>
+            <Input
+              id="photo"
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) setFile(file);
+              }}
+            />
+            <p className="text-xs text-muted-foreground">Upload a professional photo (Max 2MB)</p>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

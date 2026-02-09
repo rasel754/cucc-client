@@ -1,18 +1,21 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import PageTitle from "@/components/common/PageTitle";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  User, Calendar, Trophy, FileText, Download, Award, 
+import {
+  User, Calendar, Trophy, FileText, Download, Award,
   Code2, Shield, Lightbulb, Clock, MapPin, Mail, Phone,
   GraduationCap, Droplet, Settings, LogOut
 } from "lucide-react";
 import { currentUser, certificates, userAchievements, userEvents, wingNames, events } from "@/data/mockData";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+
+import { getImageUrl } from "@/lib/utils";
 
 const wingIcons = {
   programming: Code2,
@@ -30,7 +33,7 @@ export default function MemberDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  
+
   // Use auth user data if available, fallback to mock data
   const displayUser = user ? {
     name: user.name,
@@ -45,8 +48,9 @@ export default function MemberDashboard() {
     bloodGroup: user.bloodGroup,
     address: user.presentAddress,
     skills: user.skills || [],
+    avatar: user.profilePhoto,
   } : currentUser;
-  
+
   const WingIcon = wingIcons[displayUser.wing] || Code2;
 
   const upcomingEvents = events.filter(e => e.status === "upcoming");
@@ -58,16 +62,21 @@ export default function MemberDashboard() {
 
   return (
     <Layout>
+      <PageTitle title="Dashboard" />
       <div className="min-h-screen bg-muted/30">
         {/* Header */}
         <div className="bg-gradient-to-r from-secondary via-cucc-navy to-secondary py-12">
           <div className="container mx-auto px-4">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
               {/* Avatar */}
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary to-cucc-sky flex items-center justify-center text-3xl font-bold text-primary-foreground shadow-xl">
-                {currentUser.name.split(" ").map(n => n[0]).join("")}
+              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary to-cucc-sky flex items-center justify-center text-3xl font-bold text-primary-foreground shadow-xl overflow-hidden">
+                {displayUser.avatar ? (
+                  <img src={getImageUrl(displayUser.avatar)} alt={displayUser.name} className="w-full h-full object-cover" />
+                ) : (
+                  displayUser.name.split(" ").map(n => n[0]).join("")
+                )}
               </div>
-              
+
               {/* Info */}
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
@@ -105,9 +114,9 @@ export default function MemberDashboard() {
                     Settings
                   </Button>
                 </Link>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="border-destructive/30 text-destructive hover:bg-destructive/10"
                   onClick={handleLogout}
                 >
@@ -178,38 +187,68 @@ export default function MemberDashboard() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm text-muted-foreground">Student ID</p>
-                        <p className="font-medium">{currentUser.studentId}</p>
+                        <p className="font-medium">{displayUser.studentId}</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Department</p>
-                        <p className="font-medium">{currentUser.department}</p>
+                        <p className="font-medium">{user?.department || displayUser.department}</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground flex items-center gap-1">
                           <Mail className="w-3 h-3" /> Email
                         </p>
-                        <p className="font-medium text-sm">{currentUser.email}</p>
+                        <p className="font-medium text-sm break-all">{displayUser.email}</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground flex items-center gap-1">
                           <Phone className="w-3 h-3" /> Phone
                         </p>
-                        <p className="font-medium">{currentUser.phone}</p>
+                        <p className="font-medium">{displayUser.phone}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="w-3 h-3" /> WhatsApp
+                        </p>
+                        <p className="font-medium">{user?.whatsapp || "N/A"}</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground flex items-center gap-1">
                           <Droplet className="w-3 h-3" /> Blood Group
                         </p>
-                        <p className="font-medium">{currentUser.bloodGroup}</p>
+                        <p className="font-medium">{displayUser.bloodGroup}</p>
                       </div>
                       <div>
+                        <p className="text-sm text-muted-foreground">Date of Birth</p>
+                        <p className="font-medium">{user?.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : "N/A"}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Gender</p>
+                        <p className="font-medium capitalize">{user?.gender || "N/A"}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Religion</p>
+                        <p className="font-medium">{user?.religion || "N/A"}</p>
+                      </div>
+                      <div className="col-span-2">
                         <p className="text-sm text-muted-foreground flex items-center gap-1">
-                          <MapPin className="w-3 h-3" /> Address
+                          <MapPin className="w-3 h-3" /> Present Address
                         </p>
-                        <p className="font-medium">{currentUser.address}</p>
+                        <p className="font-medium">{displayUser.address}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <MapPin className="w-3 h-3" /> Permanent Address
+                        </p>
+                        <p className="font-medium">{user?.permanentAddress || "N/A"}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Phone className="w-3 h-3" /> Emergency Contact
+                        </p>
+                        <p className="font-medium">{user?.emergencyContact || "N/A"}</p>
                       </div>
                     </div>
-                    
+
                     <div>
                       <p className="text-sm text-muted-foreground mb-2">Skills</p>
                       <div className="flex flex-wrap gap-2">

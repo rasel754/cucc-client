@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useToast } from "@/hooks/use-toast";
 import { apiService } from "@/lib/api";
 import { Upload, X } from "lucide-react";
+import { MultiSelect } from "@/components/ui/multi-select";
 
 interface AddMemberFormProps {
   open: boolean;
@@ -22,13 +23,17 @@ const religions = ["Islam", "Hinduism", "Christianity", "Buddhism", "Others"];
 const clubWings = [
   { value: "Programming", label: "Programming Club" },
   { value: "Cyber Security", label: "Cyber Security Club" },
-  { value: "R&D", label: "R&D Club" },
+  { value: "Research & Development", label: "Research & Development Club" },
 ];
+
+const technicalSkillsOptions = ["Graphic Design", "Video Editing", "Content Writing", "Others"];
+const extraCurricularOptions = ["Debate", "Dance", "Sports", "Photography", "Song", "Others"];
 
 export function AddMemberForm({ open, onOpenChange, onSuccess }: AddMemberFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profilePreview, setProfilePreview] = useState<string>("");
+  const [profileFile, setProfileFile] = useState<File | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -48,8 +53,9 @@ export function AddMemberForm({ open, onOpenChange, onSuccess }: AddMemberFormPr
     presentAddress: "",
     permanentAddress: "",
     emergencyContact: "",
+    skills: [] as string[],
+    extraCurricular: [] as string[],
     clubWing: "" as "Programming" | "Cyber Security" | "R&D" | "",
-    profilePhoto: "",
     paymentMethod: "" as "BKASH" | "NAGAD" | "",
     transactionId: "",
   });
@@ -61,12 +67,10 @@ export function AddMemberForm({ open, onOpenChange, onSuccess }: AddMemberFormPr
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setProfileFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        const result = reader.result as string;
-        setProfilePreview(result);
-        // In production, upload to Cloudinary and store URL
-        updateField("profilePhoto", result);
+        setProfilePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -74,7 +78,7 @@ export function AddMemberForm({ open, onOpenChange, onSuccess }: AddMemberFormPr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.clubWing || !formData.paymentMethod) {
       toast({
         title: "Validation Error",
@@ -85,22 +89,25 @@ export function AddMemberForm({ open, onOpenChange, onSuccess }: AddMemberFormPr
     }
 
     setIsSubmitting(true);
-    
+
     try {
       await apiService.createMember({
         ...formData,
+        skills: formData.skills.length > 0 ? [formData.skills.join(", ")] : [],
+        extraCurricular: formData.extraCurricular.length > 0 ? [formData.extraCurricular.join(", ")] : [],
         clubWing: formData.clubWing as "Programming" | "Cyber Security" | "R&D",
         paymentMethod: formData.paymentMethod as "BKASH" | "NAGAD",
-      });
-      
+        approvalStatus: "APPROVED",
+      }, profileFile);
+
       toast({
         title: "Member Added",
         description: "New member has been registered successfully.",
       });
-      
+
       onOpenChange(false);
       onSuccess?.();
-      
+
       // Reset form
       setFormData({
         name: "",
@@ -120,13 +127,16 @@ export function AddMemberForm({ open, onOpenChange, onSuccess }: AddMemberFormPr
         presentAddress: "",
         permanentAddress: "",
         emergencyContact: "",
+        skills: [],
+        extraCurricular: [],
         clubWing: "",
-        profilePhoto: "",
         paymentMethod: "",
         transactionId: "",
       });
       setProfilePreview("");
+      setProfileFile(null);
     } catch (error) {
+      console.error(error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to add member.",
@@ -156,7 +166,7 @@ export function AddMemberForm({ open, onOpenChange, onSuccess }: AddMemberFormPr
                     type="button"
                     onClick={() => {
                       setProfilePreview("");
-                      updateField("profilePhoto", "");
+                      setProfileFile(null);
                     }}
                     className="absolute top-0 right-0 p-1 bg-destructive text-destructive-foreground rounded-full"
                   >
@@ -357,6 +367,45 @@ export function AddMemberForm({ open, onOpenChange, onSuccess }: AddMemberFormPr
             />
           </div>
 
+          <div className="space-y-2">
+            <Label>Permanent Address</Label>
+            <Textarea
+              value={formData.permanentAddress}
+              onChange={(e) => updateField("permanentAddress", e.target.value)}
+              placeholder="Leave empty if same as present address"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Emergency Contact Number</Label>
+            <Input
+              value={formData.emergencyContact}
+              onChange={(e) => updateField("emergencyContact", e.target.value)}
+              placeholder="+880 1XXX XXXXXX"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Technical Skills</Label>
+              <MultiSelect
+                options={technicalSkillsOptions}
+                selected={formData.skills}
+                onChange={(selected) => setFormData(prev => ({ ...prev, skills: selected }))}
+                placeholder="Select Select"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Extra Curricular Activities</Label>
+              <MultiSelect
+                options={extraCurricularOptions}
+                selected={formData.extraCurricular}
+                onChange={(selected) => setFormData(prev => ({ ...prev, extraCurricular: selected }))}
+                placeholder="Select Activity"
+              />
+            </div>
+          </div>
+
           {/* Club Wing */}
           <div className="space-y-2">
             <Label>Club Wing *</Label>
@@ -381,7 +430,7 @@ export function AddMemberForm({ open, onOpenChange, onSuccess }: AddMemberFormPr
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="BKASH">bKash</SelectItem>
+                  <SelectItem value="BKASH">Bkash</SelectItem>
                   <SelectItem value="NAGAD">Nagad</SelectItem>
                 </SelectContent>
               </Select>
@@ -407,6 +456,6 @@ export function AddMemberForm({ open, onOpenChange, onSuccess }: AddMemberFormPr
           </div>
         </form>
       </DialogContent>
-    </Dialog>
+    </Dialog >
   );
 }

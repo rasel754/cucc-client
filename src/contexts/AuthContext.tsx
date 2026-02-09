@@ -33,14 +33,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const response = await apiService.login({ email, password });
-    
+
     if (response.success && response.data) {
       const { accessToken, user: userData } = response.data;
-      
+
       // Store token and user
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("user", JSON.stringify(userData));
-      
+
       setUser(userData);
     } else {
       throw new Error(response.message || "Login failed");

@@ -1,7 +1,11 @@
 import { Layout } from "@/components/layout/Layout";
+import PageTitle from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowRight, Target, Eye, BookOpen, Download, Users, Calendar } from "lucide-react";
+import { ArrowRight, Target, Eye, BookOpen, Download, Users, Calendar, Mail, Building2, Briefcase } from "lucide-react";
+import { useEffect, useState } from "react";
+import { apiService, Advisor } from "@/lib/api";
+import { getImageUrl } from "@/lib/utils";
 
 const facultyAdvisors = [
   {
@@ -28,8 +32,29 @@ const timeline = [
 ];
 
 export default function AboutPage() {
+  const [advisors, setAdvisors] = useState<Advisor[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAdvisors = async () => {
+      try {
+        const response = await apiService.getAllAdvisors();
+        if (response.success && response.data) {
+          setAdvisors(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch advisors:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAdvisors();
+  }, []);
+
   return (
     <Layout>
+      <PageTitle title="About Us" />
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-secondary via-secondary/95 to-primary/80 text-secondary-foreground py-20 md:py-32">
         <div className="container mx-auto px-4">
@@ -42,7 +67,7 @@ export default function AboutPage() {
               <span className="block text-cucc-sky mt-2">Tech Leaders</span>
             </h1>
             <p className="text-xl text-secondary-foreground/80 mb-8">
-              City University Computer Club (CUCC) is the premier student technology organization, 
+              City University Computer Club (CUCC) is the premier student technology organization,
               dedicated to fostering innovation, excellence, and community among aspiring tech professionals.
             </p>
             <Link to="/register">
@@ -65,9 +90,9 @@ export default function AboutPage() {
               </div>
               <h2 className="font-display text-2xl font-bold text-foreground mb-4">Our Mission</h2>
               <p className="text-muted-foreground leading-relaxed">
-                To create a vibrant ecosystem where students can explore, learn, and master 
-                various domains of computer science. We aim to provide hands-on experience 
-                through workshops, competitions, and real-world projects that prepare our 
+                To create a vibrant ecosystem where students can explore, learn, and master
+                various domains of computer science. We aim to provide hands-on experience
+                through workshops, competitions, and real-world projects that prepare our
                 members for successful careers in technology.
               </p>
             </div>
@@ -77,9 +102,9 @@ export default function AboutPage() {
               </div>
               <h2 className="font-display text-2xl font-bold text-foreground mb-4">Our Vision</h2>
               <p className="text-muted-foreground leading-relaxed">
-                To become the leading student technology organization in Bangladesh, producing 
-                skilled professionals who drive innovation and contribute to the nation's 
-                digital transformation. We envision a community where every member achieves 
+                To become the leading student technology organization in Bangladesh, producing
+                skilled professionals who drive innovation and contribute to the nation's
+                digital transformation. We envision a community where every member achieves
                 their full potential in the tech industry.
               </p>
             </div>
@@ -96,17 +121,16 @@ export default function AboutPage() {
               From a small group of passionate students to a thriving community of 500+ members
             </p>
           </div>
-          
+
           <div className="relative max-w-4xl mx-auto">
             {/* Timeline Line */}
             <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-0.5 bg-primary/20 -translate-x-1/2" />
-            
+
             {timeline.map((item, index) => (
-              <div 
+              <div
                 key={item.year}
-                className={`relative flex items-center gap-8 mb-8 ${
-                  index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
-                }`}
+                className={`relative flex items-center gap-8 mb-8 ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
+                  }`}
               >
                 {/* Content */}
                 <div className={`flex-1 ml-12 md:ml-0 ${index % 2 === 0 ? 'md:text-right md:pr-12' : 'md:pl-12'}`}>
@@ -116,12 +140,12 @@ export default function AboutPage() {
                     <p className="text-muted-foreground text-sm mt-2">{item.description}</p>
                   </div>
                 </div>
-                
+
                 {/* Circle */}
                 <div className="absolute left-4 md:left-1/2 w-8 h-8 bg-primary rounded-full border-4 border-background -translate-x-1/2 flex items-center justify-center">
                   <Calendar className="w-3 h-3 text-primary-foreground" />
                 </div>
-                
+
                 {/* Empty space for alternating layout */}
                 <div className="hidden md:block flex-1" />
               </div>
@@ -139,16 +163,57 @@ export default function AboutPage() {
               Our dedicated faculty advisors guide and support our initiatives
             </p>
           </div>
-          
+
           <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-            {facultyAdvisors.map((advisor) => (
-              <div key={advisor.name} className="p-8 rounded-2xl bg-card border border-border/50 text-center card-hover">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-cucc-navy flex items-center justify-center mx-auto mb-4 text-4xl">
-                  {advisor.image}
+            {advisors.length === 0 && !isLoading && (
+              <p className="text-center text-muted-foreground w-full col-span-2">No faculty advisors listed yet.</p>
+            )}
+            {advisors.map((advisor) => (
+              <div key={advisor._id} className="group relative p-6 rounded-2xl bg-card border border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
+                {/* Hover Gradient Effect */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                <div className="relative z-10 flex flex-col items-center">
+                  {/* Profile Image with Ring */}
+                  <div className="w-32 h-32 rounded-full p-1 bg-gradient-to-br from-primary to-cucc-navy mb-6 group-hover:scale-105 transition-transform duration-300">
+                    <div className="w-full h-full rounded-full bg-background overflow-hidden relative">
+                      {advisor.profileImage?.url ? (
+                        <img
+                          src={getImageUrl(advisor.profileImage.url)}
+                          alt={advisor.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-muted">
+                          <span className="text-4xl">👨‍🏫</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <h3 className="font-display text-xl font-bold text-foreground mb-1">{advisor.name}</h3>
+
+                  <div className="flex flex-col gap-2 mt-4 w-full">
+                    <div className="flex items-center gap-2 text-sm text-primary bg-primary/5 px-3 py-1.5 rounded-full self-center">
+                      <Briefcase className="w-4 h-4" />
+                      <span className="font-medium">{advisor.role}</span>
+                    </div>
+
+                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-2">
+                      <Building2 className="w-4 h-4" />
+                      <span>{advisor.department}</span>
+                    </div>
+
+                    <a
+                      href={`mailto:${advisor.email}`}
+                      className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mt-1"
+                    >
+                      <Mail className="w-4 h-4" />
+                      <span>{advisor.email}</span>
+                    </a>
+                  </div>
                 </div>
-                <h3 className="font-display text-xl font-bold text-foreground">{advisor.name}</h3>
-                <p className="text-primary font-medium">{advisor.title}</p>
-                <p className="text-muted-foreground text-sm mt-1">{advisor.department}</p>
               </div>
             ))}
           </div>
@@ -164,7 +229,7 @@ export default function AboutPage() {
             </div>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">Club Constitution</h2>
             <p className="text-muted-foreground mb-8">
-              Our constitution outlines the rules, regulations, and governance structure of CUCC. 
+              Our constitution outlines the rules, regulations, and governance structure of CUCC.
               It ensures transparency and fairness in all club activities.
             </p>
             <Button variant="hero" size="lg">

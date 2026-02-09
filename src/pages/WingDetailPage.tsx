@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout/Layout";
+import PageTitle from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useParams, Link } from "react-router-dom";
@@ -74,7 +75,7 @@ const wingsData = {
     icon: Lightbulb,
     title: "Research & Development Club",
     tagline: "Innovate for Tomorrow",
-    description: "The R&D Club is where innovation meets execution. We work on cutting-edge projects in AI/ML, IoT, blockchain, and publish research papers in renowned conferences.",
+    description: "The Research & Development Club is where innovation meets execution. We work on cutting-edge projects in AI/ML, IoT, blockchain, and publish research papers in renowned conferences.",
     color: "from-cucc-gold to-orange-600",
     features: [
       "AI/ML project development",
@@ -110,6 +111,7 @@ export default function WingDetailPage() {
   if (!wing) {
     return (
       <Layout>
+        <PageTitle title="Wing Not Found" />
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold">Wing not found</h1>
@@ -126,6 +128,7 @@ export default function WingDetailPage() {
 
   return (
     <Layout>
+      <PageTitle title={wing.title} />
       {/* Hero */}
       <section className={`bg-gradient-to-br ${wing.color} text-primary-foreground py-20 md:py-32`}>
         <div className="container mx-auto px-4">

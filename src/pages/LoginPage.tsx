@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import PageTitle from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +29,7 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       toast({
         title: "Validation Error",
@@ -39,19 +40,19 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
-    
+
     try {
       await login(email, password);
-      
+
       // Get fresh user from storage after login
       const storedUser = localStorage.getItem("user");
       const userData = storedUser ? JSON.parse(storedUser) : null;
-      
+
       toast({
         title: "Login Successful!",
         description: `Welcome back, ${userData?.name || "User"}!`,
       });
-      
+
       // Redirect based on role
       const from = location.state?.from?.pathname;
       if (from) {
@@ -74,6 +75,7 @@ export default function LoginPage() {
 
   return (
     <Layout>
+      <PageTitle title="Login" />
       <div className="min-h-screen flex items-center justify-center bg-muted/30 py-12 px-4">
         <div className="w-full max-w-md">
           {/* Logo */}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import PageTitle from "@/components/common/PageTitle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,14 +15,14 @@ import { useToast } from "@/hooks/use-toast";
 import { apiService } from "@/lib/api";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
-const batches = Array.from({ length: 10 }, (_, i) => `${50 + i}`);
+const batches = Array.from({ length: 40 }, (_, i) => `${60 + i}`);
 const sections = ["A", "B", "C", "D"];
 const religions = ["Islam", "Hinduism", "Christianity", "Buddhism", "Others"];
 
 const clubWings = [
   { id: "Programming", label: "Programming Club" },
   { id: "Cyber Security", label: "Cyber Security Club" },
-  { id: "R&D", label: "R&D Club" },
+  { id: "R&D", label: "Research & Development Club" },
 ];
 
 const technicalSkills = [
@@ -44,9 +45,10 @@ export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profilePreview, setProfilePreview] = useState<string>("");
+  const [profileFile, setProfileFile] = useState<File | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState({
     // Personal Information
     name: "",
@@ -59,7 +61,7 @@ export default function RegisterPage() {
     shift: "",
     bloodGroup: "",
     religion: "",
-    
+
     // Contact Information
     phoneNumber: "",
     whatsapp: "",
@@ -67,21 +69,20 @@ export default function RegisterPage() {
     presentAddress: "",
     permanentAddress: "",
     emergencyContact: "",
-    
+
     // Club Information
     clubWing: "" as "Programming" | "Cyber Security" | "R&D" | "",
-    profilePhoto: "",
-    
+
     // Payment Information
     paymentMethod: "" as "BKASH" | "NAGAD" | "",
     transactionId: "",
-    
+
     // Interests & Skills
     technicalSkills: [] as string[],
     extraCurricular: [] as string[],
     otherSkill: "",
     otherExtra: "",
-    
+
     // Account
     password: "",
     confirmPassword: "",
@@ -101,15 +102,56 @@ export default function RegisterPage() {
     }));
   };
 
+  // Validation functions for each step
+  const isStep1Valid = () => {
+    return (
+      profileFile !== null &&
+      formData.name.trim() !== "" &&
+      formData.studentId.trim() !== "" &&
+      formData.dateOfBirth !== "" &&
+      formData.batch !== "" &&
+      formData.section !== "" &&
+      formData.gender !== "" &&
+      formData.shift !== ""
+    );
+  };
+
+  const isStep2Valid = () => {
+    return (
+      formData.phoneNumber.trim() !== "" &&
+      formData.email.trim() !== "" &&
+      formData.presentAddress.trim() !== ""
+    );
+  };
+
+  const isStep3Valid = () => {
+    return (
+      formData.clubWing !== "" &&
+      formData.paymentMethod !== "" &&
+      formData.transactionId.trim() !== ""
+    );
+  };
+
+  const isStep4Valid = () => {
+    return (
+      formData.password.trim() !== "" &&
+      formData.confirmPassword.trim() !== "" &&
+      formData.password === formData.confirmPassword &&
+      formData.agreeTerms
+    );
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Store the actual file object
+      setProfileFile(file);
+
+      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
         setProfilePreview(result);
-        // In production, upload to Cloudinary and store URL
-        updateFormData("profilePhoto", result);
       };
       reader.readAsDataURL(file);
     }
@@ -136,7 +178,7 @@ export default function RegisterPage() {
     }
 
     setIsSubmitting(true);
-    
+
     try {
       await apiService.createMember({
         name: formData.name,
@@ -157,13 +199,12 @@ export default function RegisterPage() {
         permanentAddress: formData.permanentAddress,
         emergencyContact: formData.emergencyContact,
         clubWing: formData.clubWing as "Programming" | "Cyber Security" | "R&D",
-        profilePhoto: formData.profilePhoto,
         paymentMethod: formData.paymentMethod as "BKASH" | "NAGAD",
         transactionId: formData.transactionId,
         skills: formData.technicalSkills,
         extraCurricular: formData.extraCurricular,
-      });
-      
+      }, profileFile);
+
       toast({
         title: "Registration Submitted!",
         description: "Your membership application has been received. We'll review and get back to you soon.",
@@ -182,6 +223,7 @@ export default function RegisterPage() {
 
   return (
     <Layout>
+      <PageTitle title="Join CUCC" />
       <div className="min-h-screen bg-muted/30 py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
@@ -202,11 +244,10 @@ export default function RegisterPage() {
             <div className="flex items-center justify-center gap-4 mb-8">
               {[1, 2, 3, 4].map((s) => (
                 <div key={s} className="flex items-center gap-2">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
-                    step >= s 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'bg-muted text-muted-foreground'
-                  }`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${step >= s
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground'
+                    }`}>
                     {step > s ? <CheckCircle className="w-5 h-5" /> : s}
                   </div>
                   {s < 4 && <div className={`w-12 h-1 rounded ${step > s ? 'bg-primary' : 'bg-muted'}`} />}
@@ -233,7 +274,7 @@ export default function RegisterPage() {
                               type="button"
                               onClick={() => {
                                 setProfilePreview("");
-                                updateFormData("profilePhoto", "");
+                                setProfileFile(null);
                               }}
                               className="absolute top-0 right-0 p-1 bg-destructive text-destructive-foreground rounded-full"
                             >
@@ -395,7 +436,7 @@ export default function RegisterPage() {
                     </div>
 
                     <div className="flex justify-end pt-4">
-                      <Button onClick={() => setStep(2)} variant="hero">
+                      <Button onClick={() => setStep(2)} variant="hero" disabled={!isStep1Valid()}>
                         Continue
                         <ArrowRight className="w-4 h-4" />
                       </Button>
@@ -478,7 +519,7 @@ export default function RegisterPage() {
                         <ArrowLeft className="w-4 h-4" />
                         Back
                       </Button>
-                      <Button onClick={() => setStep(3)} variant="hero">
+                      <Button onClick={() => setStep(3)} variant="hero" disabled={!isStep2Valid()}>
                         Continue
                         <ArrowRight className="w-4 h-4" />
                       </Button>
@@ -505,11 +546,10 @@ export default function RegisterPage() {
                         {clubWings.map((wing) => (
                           <div
                             key={wing.id}
-                            className={`flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-colors ${
-                              formData.clubWing === wing.id
-                                ? "border-primary bg-primary/5"
-                                : "border-border hover:border-primary/50"
-                            }`}
+                            className={`flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-colors ${formData.clubWing === wing.id
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                              }`}
                           >
                             <RadioGroupItem value={wing.id} id={wing.id} />
                             <Label htmlFor={wing.id} className="font-medium cursor-pointer flex-1">
@@ -531,19 +571,19 @@ export default function RegisterPage() {
                           Send to: bKash - 01XXXXXXXXX or Nagad - 01XXXXXXXXX
                         </p>
                       </div>
-                      
+
                       <div className="grid md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label>Payment Method *</Label>
-                          <Select 
-                            value={formData.paymentMethod} 
+                          <Select
+                            value={formData.paymentMethod}
                             onValueChange={(value) => updateFormData("paymentMethod", value)}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Select payment method" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="BKASH">bKash</SelectItem>
+                              <SelectItem value="BKASH">Bkash</SelectItem>
                               <SelectItem value="NAGAD">Nagad</SelectItem>
                             </SelectContent>
                           </Select>
@@ -565,7 +605,7 @@ export default function RegisterPage() {
                         <ArrowLeft className="w-4 h-4" />
                         Back
                       </Button>
-                      <Button onClick={() => setStep(4)} variant="hero">
+                      <Button onClick={() => setStep(4)} variant="hero" disabled={!isStep3Valid()}>
                         Continue
                         <ArrowRight className="w-4 h-4" />
                       </Button>
@@ -665,7 +705,7 @@ export default function RegisterPage() {
                       />
                       <Label htmlFor="terms" className="font-normal text-sm leading-relaxed">
                         I agree to the CUCC <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link> and{" "}
-                        <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>. I understand that my membership 
+                        <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>. I understand that my membership
                         is subject to approval by the club administrators.
                       </Label>
                     </div>
@@ -675,10 +715,10 @@ export default function RegisterPage() {
                         <ArrowLeft className="w-4 h-4" />
                         Back
                       </Button>
-                      <Button 
-                        onClick={handleSubmit} 
-                        variant="hero" 
-                        disabled={!formData.agreeTerms || isSubmitting}
+                      <Button
+                        onClick={handleSubmit}
+                        variant="hero"
+                        disabled={!isStep4Valid() || isSubmitting}
                       >
                         {isSubmitting ? "Submitting..." : "Submit Application"}
                         <ArrowRight className="w-4 h-4" />
@@ -697,7 +737,7 @@ export default function RegisterPage() {
                     Application Submitted!
                   </h2>
                   <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-                    Thank you for applying to join CUCC. Your application is now pending review. 
+                    Thank you for applying to join CUCC. Your application is now pending review.
                     We'll notify you via email once it's approved.
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
